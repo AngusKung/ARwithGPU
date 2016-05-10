@@ -52,7 +52,7 @@ int main(int argc, char ** argv)
     vector<unsigned char> label;
     for(size_t i=1;i<=width2*height2*4; i++){
       if(i%4==0)
-        label.push_back((unsigned char)0);
+        label.push_back((unsigned char)255);
       else
         label.push_back((unsigned char)0);
     }
@@ -69,7 +69,7 @@ void labelByDepth(vector<unsigned char>& label, vector<unsigned char>& dImage, u
     pickList.push_back(idx);
   }
   random_shuffle ( pickList.begin(), pickList.end() );
-  unsigned char labelNum = 0;
+  unsigned char labelNum = 252;
   while(pickList.size()!=0){
     cout<<"Label:"<<int(labelNum)<<" "<<pickList.size()<<endl;;
     size_t randomSeed = pickList[0];
@@ -83,9 +83,9 @@ void labelByDepth(vector<unsigned char>& label, vector<unsigned char>& dImage, u
 
 void findNeighbor(vector<unsigned char>& label, vector<unsigned char>& dImage, vector<size_t>& pickList, unsigned width, unsigned height
                   , unsigned char startD,size_t pickNum ,unsigned char labelNum){
-  //label[4*pickNum] = labelNum;
-  //label[4*pickNum+1] = labelNum;
-  //label[4*pickNum+2] = labelNum;
+  label[4*pickNum] = labelNum;
+  label[4*pickNum+1] = labelNum;
+  label[4*pickNum+2] = labelNum;
   for(size_t i=0;i<pickList.size();i++){
     if(pickList[i]==pickNum){
       pickList.erase(pickList.begin()+i);
