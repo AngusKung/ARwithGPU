@@ -148,7 +148,5 @@ void savePNG(const string filename, vector<unsigned char>& image, unsigned width
 {
   //Encode the image
   unsigned error = lodepng::encode(filename.c_str(), image, width, height);
-
-  //if there's an error, display it
   if(error) std::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
 }
