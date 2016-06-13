@@ -23,7 +23,7 @@ int main(int argc, char ** argv)
   }
   const string file_prefix = argv[1];
   const string result_prefix = argv[2];
-  const string RESULT_FILENAME = result_prefix + '/' +result_prefix;
+  const string RESULT_FILENAME = file_prefix + '/' +result_prefix;
   const string FILENAME = file_prefix + '/' +file_prefix;
   unsigned width1,height1,width2,height2;
   for(int i =1;i<=98;i++){
@@ -50,8 +50,8 @@ int main(int argc, char ** argv)
       cerr<<"Vector size wrong on "<<RGBfilename<<" and "<<Dfilename<<endl;
     }
     vector<unsigned char> label;
-    for(size_t i=1;i<=width2*height2*4; i++){
-      if(i%4==0)
+    for(size_t j=1;j<=width2*height2*4; j++){
+      if(j%4==0)
         label.push_back((unsigned char)255);
       else
         label.push_back((unsigned char)0);
