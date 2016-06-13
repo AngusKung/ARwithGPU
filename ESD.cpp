@@ -84,6 +84,9 @@
 //time usage
 #include <ctime>
 
+//self-defined class
+//#include "planeObject.h"
+
 #define CURVATURE UINT32_MAX
 #define PLANE 0
 
@@ -127,25 +130,46 @@ double curvature_ratio = 100;//todo
 //Agglomerative Surface Growing Learning Rate
 double mu;
 
+
+
+class planeObject {
+public:
+
+    planeObject(std::vector<uint32_t>& p, const double& nx = 0, const double& ny = 0, const double& nz = 0,
+                const double& px = 0, const double& py = 0, const double& pz = 0, const float& var = 0) :
+                plane(p), aver_nor_x(nx), aver_nor_y(ny), aver_nor_z(nz),
+                aver_pos_x(px), aver_pos_y(py), aver_pos_z(pz), aver_var(var) {
+        //for(std::vector<uint32_t>::iterator it = p.begin(); it != p.end(); it++) {
+        //    plane.push_back(*it);
+        //}
+    }
+
+    std::vector<uint32_t> plane;
+    double aver_nor_x, aver_nor_y, aver_nor_z, aver_pos_x, aver_pos_y, aver_pos_z;
+    float aver_var;
+};
+
+
+
 // global
 std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
 std::map<uint32_t, int> clusters_int;
 std::map<uint32_t, bool> clusters_used;
 std::vector<uint32_t> plane;
-std::vector< std::vector<uint32_t> > planesVectors;
+std::vector< planeObject > planesVectors;
 std::vector<size_t> orderVectors;// Remember index of planesVectors to descending order
-std::vector<double> aver_nor_x,aver_nor_y,aver_nor_z; 
-std::vector<double> aver_pos_x,aver_pos_y,aver_pos_z; 
-std::vector<float> aver_var;
+//std::vector<double> aver_nor_x,aver_nor_y,aver_nor_z; 
+//std::vector<double> aver_pos_x,aver_pos_y,aver_pos_z; 
+//std::vector<float> aver_var;
 std::map<uint32_t, uint32_t> sv_label_to_seg_label_map;
 
 std::vector<double> normal_vector_x,normal_vector_y,normal_vector_z;
 std::vector<double> pos_x, pos_y, pos_z;
 float max_x=0, max_y=0, max_z=0;
 float min_x=0, min_y=0, min_z=0;
-int size_temp=0;
-double avn_x=0,avn_y=0,avn_z=0;
-double avp_x=0, avp_y=0, avp_z=0;
+//int size_temp=0;
+//double avn_x=0,avn_y=0,avn_z=0;
+//double avp_x=0, avp_y=0, avp_z=0;
 
 // handle the vtk stuff of visualization
 void addSupervoxelConnectionsToViewer (PointT &supervoxel_center,
@@ -155,12 +179,13 @@ void addSupervoxelConnectionsToViewer (PointT &supervoxel_center,
 
 void savePCDfile(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, const char* fileName);
 void findNeighbor(std::vector<uint32_t>& plane, uint32_t the_cluster_num
-                  , double the_normal_x, double the_normal_y, double the_normal_z);
+                  , double the_normal_x, double the_normal_y, double the_normal_z
+                  , int& size_temp, double& avn_x, double& avn_y, double& avn_z
+                  , double& avp_x, double& avp_y, double& avp_z);
 void scaleAddCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr add_cloud_ptr, double plane_variance, double scale_ratio);
 size_t findProjectPoint(float x, float y, float z, pcl::PointCloud<pcl::PointXYZRGB>::Ptr augment_cloud, size_t AR_planar_label, float& new_x ,float& new_y, float& new_z);
 void replaceRGB_AR(pcl::PointCloud<pcl::PointXYZRGB>::Ptr augment_cloud, pcl::PointCloud<pcl::PointXYZRGBL>::Ptr result_cloud_ptr, size_t AR_planar);
 bool loadPointCloudFile(const std::string& fileName, pcl::PCLPointCloud2& pointCloud);
-
 
 /// ---- main ---- ///
 int
@@ -168,12 +193,12 @@ main (int argc,
       char ** argv)
 {
   if (argc <= 5) {
-    PCL_INFO("Usage: ./MPSS [supervoxel_scale] [input_point_cloud] [ransacThreshold] [parrallel_threshold] [mu] [parrallel_filter] [distance_to_plane] (-sr) (-apc [aug_point_cloud])\n");
-    PCL_INFO("  Ex:  ./MPSS 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 \n");
-    PCL_INFO("  Ex:  ./MPSS 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -sr\n");
-    PCL_INFO("  Ex:  ./MPSS 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./MPSS 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -sr -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./MPSS 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -apc my_pic.ply -sr\n");
+    PCL_INFO("Usage: ./ESD [supervoxel_scale] [input_point_cloud] [ransacThreshold] [parrallel_threshold] [mu] [parrallel_filter] [distance_to_plane] (-sr) (-apc [aug_point_cloud])\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 \n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -sr\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -sr -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -apc my_pic.ply -sr\n");
     PCL_INFO("Notice:\n");
     PCL_INFO("  [input_point_cloud] and [aug_point_cloud] supports .ply and .pcd\n");
     PCL_INFO("  -sr: show result\n");
@@ -341,100 +366,63 @@ main (int argc,
     the_normal_z = normal_vector_z[the_cluster_int];
     //std::cerr<<endl<<"x: "<<the_normal_x<<endl<<"y: "<<the_normal_y<<endl<<"z: "<<the_normal_z<<endl;
     plane.clear();
-    ::size_temp = 0;
-    ::avp_x = 0;
-    ::avp_y = 0;
-    ::avp_z = 0;
-    ::avn_x = 0;
-    ::avn_y = 0;
-    ::avn_z = 0;
-    findNeighbor(plane,the_cluster_num,the_normal_x,the_normal_y,the_normal_z);
-    if(::size_temp <= 1)
+    int size_temp = 0;
+    double avp_x = 0;
+    double avp_y = 0;
+    double avp_z = 0;
+    double avn_x = 0;
+    double avn_y = 0;
+    double avn_z = 0;
+    findNeighbor(plane,the_cluster_num,the_normal_x,the_normal_y,the_normal_z,
+                 size_temp, avn_x, avn_y, avn_z, avp_x, avp_y, avp_z);
+    if(size_temp <= 1)
       continue;
-    ::avn_x /= double(::size_temp);
-    ::avn_y /= double(::size_temp);
-    ::avn_z /= double(::size_temp);
-    ::avp_x /= double(::size_temp);
-    ::avp_y /= double(::size_temp);
-    ::avp_z /= double(::size_temp);
+    avn_x /= double(size_temp);
+    avn_y /= double(size_temp);
+    avn_z /= double(size_temp);
+    avp_x /= double(size_temp);
+    avp_y /= double(size_temp);
+    avp_z /= double(size_temp);
+// var is used to determine whether the plane is a curve or not.
     std::vector<uint32_t>::iterator super_it = plane.begin();
-// var is used to determine whether the plane is a curve or not. Perhaps we can delete it?
     double var_x=0,var_y=0,var_z=0;
     for(;super_it!=plane.end();super_it++){
-      int the_cluster_int = clusters_int.find(the_cluster_num)->second; //no int?
+      the_cluster_int = clusters_int.find(the_cluster_num)->second;
       var_x += pow(normal_vector_x[the_cluster_int]-avn_x,2);
       var_y += pow(normal_vector_y[the_cluster_int]-avn_y,2);
       var_z += pow(normal_vector_z[the_cluster_int]-avn_z,2);
     }
-    double var = (var_x+var_y+var_z)/double(::size_temp);
+    double var = (var_x+var_y+var_z)/double(size_temp);
     //std::cout<<"Var x:"<<var_x<<",y:"<<var_y<<",z:"<<var_z<<endl;
     //std::cout<<"Variance"<<var<<endl;
-    if(var>=0.1){
-      bool newCurve = true;
-      //Curvature Refinements
-      for(std::vector<double>::iterator find_it = aver_pos_x.begin();find_it!=aver_pos_x.end();find_it++){
-        size_t diff = find_it-aver_pos_x.begin();
-        double op_x = aver_pos_x[diff];
-        double op_y = aver_pos_y[diff];
-        double op_z = aver_pos_z[diff];
-        if(planesVectors[diff][0]==CURVATURE && std::abs(avp_x-op_x)+std::abs(avp_y-op_y)+std::abs(avp_z-op_z) < 
-            (std::abs(max_x-min_x)+std::abs(max_y-min_y)+std::abs(max_z-min_z))/curvature_ratio ){
-          newCurve = false;
-          planesVectors[diff].insert(planesVectors[diff].end(),plane.begin(),plane.end());
-          break;
-        }
-      }
-      if(newCurve==true){
-        std::vector<uint32_t> tmp(1,CURVATURE);
-        tmp.insert(tmp.end(),plane.begin(),plane.end());
-        planesVectors.push_back(tmp);
-        aver_nor_x.push_back(avn_x);
-        aver_nor_y.push_back(avn_y);
-        aver_nor_z.push_back(avn_z);
-        aver_pos_x.push_back(avp_x);
-        aver_pos_y.push_back(avp_y);
-        aver_pos_z.push_back(avp_z);
-        aver_var.push_back(var);
-      }
-    }
-    //else{
+    if(var < 0.1) {
       bool new_plane = true;
       //Planar Refinements
-      for(std::vector<double>::iterator find_it = aver_nor_x.begin();find_it!=aver_nor_x.end();find_it++){
-        size_t diff = find_it-aver_nor_x.begin();
-        double on_x = *find_it;
-        double on_y = aver_nor_y[diff];
-        double on_z = aver_nor_z[diff];
-        double op_x = aver_pos_x[diff];
-        double op_y = aver_pos_y[diff];
-        double op_z = aver_pos_z[diff];
-        if(planesVectors[diff][0]==PLANE && std::abs(avn_x*on_x +avn_y*on_y +avn_z*on_z) > parrallel_filter && 
+      for(std::vector< planeObject >::iterator find_it = planesVectors.begin(); find_it!=planesVectors.end(); find_it++){
+        const double on_x = find_it->aver_nor_x;
+        const double on_y = find_it->aver_nor_y;
+        const double on_z = find_it->aver_nor_z;
+        const double op_x = find_it->aver_pos_x;
+        const double op_y = find_it->aver_pos_y;
+        const double op_z = find_it->aver_pos_z;
+        if(std::abs(avn_x*on_x +avn_y*on_y +avn_z*on_z) > parrallel_filter && 
           std::abs((avn_x*avp_x + avn_y*avp_y + avn_z*avp_z) - (on_x*op_x + on_y*op_y + on_z*op_z)) < distance_to_plane ) {
           new_plane = false;
-          double weight = plane.size() / double(plane.size()+planesVectors[diff].size());
-          aver_nor_x[diff] = (1-weight)*aver_nor_x[diff] + weight*::avn_x;
-          aver_nor_y[diff] = (1-weight)*aver_nor_y[diff] + weight*::avn_y;
-          aver_nor_z[diff] = (1-weight)*aver_nor_z[diff] + weight*::avn_z;
-          aver_pos_x[diff] = (1-weight)*aver_pos_x[diff] + weight*::avp_x;
-          aver_pos_y[diff] = (1-weight)*aver_pos_y[diff] + weight*::avp_y;
-          aver_pos_z[diff] = (1-weight)*aver_pos_z[diff] + weight*::avp_z;
-          planesVectors[diff].insert(planesVectors[diff].end(),plane.begin(),plane.end());
+          double weight = plane.size() / double(plane.size()+find_it->plane.size());
+          find_it->aver_nor_x = (1-weight)*on_x + weight*avn_x;
+          find_it->aver_nor_y = (1-weight)*on_y + weight*avn_y;
+          find_it->aver_nor_z = (1-weight)*on_z + weight*avn_z;
+          find_it->aver_pos_x = (1-weight)*op_x + weight*avp_x;
+          find_it->aver_pos_y = (1-weight)*op_y + weight*avp_y;
+          find_it->aver_pos_z = (1-weight)*op_z + weight*avp_z;
+          find_it->plane.insert(find_it->plane.end(),plane.begin(),plane.end());
           break;
         }
       }
       if(new_plane == true){
-        std::vector<uint32_t> tmp(1,PLANE);
-        tmp.insert(tmp.end(),plane.begin(),plane.end());
-        planesVectors.push_back(tmp);
-        aver_nor_x.push_back(avn_x);
-        aver_nor_y.push_back(avn_y);
-        aver_nor_z.push_back(avn_z);
-        aver_pos_x.push_back(avp_x);
-        aver_pos_y.push_back(avp_y);
-        aver_pos_z.push_back(avp_z);
-        aver_var.push_back(var);
+        planesVectors.push_back( planeObject(plane, avn_x, avn_y, avn_z, avp_x, avp_y, avp_z, var) );
       }
-    //}
+    }
 
   }
   //time usage due
@@ -444,7 +432,7 @@ main (int argc,
   pcl::PointXYZRGBA the_point;
   pcl::PointCloud<pcl::PointXYZRGBA> the_points;
   pcl::PointCloud<PointT>::Ptr planes_grown(new pcl::PointCloud<PointT>);
-  std::vector<std::vector<uint32_t> >::iterator plane_it = planesVectors.begin();
+  std::vector< planeObject >::iterator plane_it = planesVectors.begin();
   std::vector<size_t>::iterator order_it = orderVectors.begin();
   int saving_num = 0;
   pcl::PointCloud<pcl::PointXYZL>::Ptr sv_labeled_cloud = super.getLabeledCloud ();
@@ -457,7 +445,7 @@ main (int argc,
   // For finding max & relabel XYZL for visualization
   for(;plane_it != planesVectors.end(); plane_it++){
     // ================== relabel ================
-    std::vector<uint32_t>::iterator it = plane_it->begin();
+/*
     if(*it==CURVATURE){
       size_t diff = plane_it-planesVectors.begin();
       label2norm_x.insert(std::pair<uint32_t,float>(planeNo,aver_nor_x[diff]));
@@ -472,23 +460,23 @@ main (int argc,
         sv_label_to_seg_label_map[*it]=planeNo;
       planeNo++;
     }
-    else{
-      size_t diff = plane_it-planesVectors.begin();
-      label2norm_x.insert(std::pair<uint32_t,float>(planeNo,aver_nor_x[diff]));
-      label2norm_y.insert(std::pair<uint32_t,float>(planeNo,aver_nor_y[diff]));
-      label2norm_z.insert(std::pair<uint32_t,float>(planeNo,aver_nor_z[diff]));
-      label2pos_x.insert(std::pair<uint32_t,float>(planeNo,aver_pos_x[diff]));
-      label2pos_y.insert(std::pair<uint32_t,float>(planeNo,aver_pos_y[diff]));
-      label2pos_z.insert(std::pair<uint32_t,float>(planeNo,aver_pos_z[diff]));
-      label2var.insert(std::pair<uint32_t,float>(planeNo,aver_var[diff]));
+*/
+//    else{
+      label2norm_x.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_nor_x));
+      label2norm_y.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_nor_y));
+      label2norm_z.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_nor_z));
+      label2pos_x.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_pos_x));
+      label2pos_y.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_pos_y));
+      label2pos_z.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_pos_z));
+      label2var.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_var));
       //std::cout<<"label2norm: No."<<planeNo<<"  "<<diff<<","<<aver_nor_x[diff]<<","<<aver_nor_y[diff]<<","<<aver_nor_z[diff]<<endl;
-      for(it = plane_it->begin()+1; it!= plane_it->end(); it++)
+      for(std::vector<uint32_t>::iterator it = plane_it->plane.begin(); it!= plane_it->plane.end(); it++)
         sv_label_to_seg_label_map[*it]=planeNo;
       planeNo++;
-    }
+//    }
     // ================== findMax ================
-    if(plane_it->size() > sizetemp){
-      sizetemp = plane_it->size();
+    if(plane_it->plane.size() > sizetemp){
+      sizetemp = plane_it->plane.size();
       max_planar = plane_it - planesVectors.begin();
     }
     // ================== orderVectors =======================
@@ -500,7 +488,7 @@ main (int argc,
     else{
       bool atEnd = true;
       for(order_it = orderVectors.begin();order_it!=orderVectors.end(); order_it++){
-        if(plane_it->size()>=planesVectors[*order_it].size()){
+        if(plane_it->plane.size()>=planesVectors[*order_it].plane.size()){
           orderVectors.insert(order_it,orderNo);
           atEnd = false;
           break;
@@ -593,7 +581,7 @@ main (int argc,
     PCL_INFO ("Done making cloud\n");
 
     //===== transformation =====
-    avp_x=0;avp_y=0;avp_z=0;avn_x=0;avn_y=0;avn_z=0;
+    double avp_x=0, avp_y=0, avp_z=0, avn_x=0, avn_y=0, avn_z=0;
     for (size_t i = 0; i < add_cloud_ptr->points.size(); i++) {
       avp_x += add_cloud_ptr->points[i].x;
       avp_y += add_cloud_ptr->points[i].y;
@@ -629,9 +617,9 @@ main (int argc,
     float target_pos_y = pos_y[nearest_cluster_int];
     float target_pos_z = pos_z[nearest_cluster_int];*/
     size_t AR_planar = max_planar;
-    double target_pos_x = aver_pos_x[AR_planar];
-    double target_pos_y = aver_pos_y[AR_planar];
-    double target_pos_z = aver_pos_z[AR_planar];
+    double target_pos_x = planesVectors[AR_planar].aver_pos_x;
+    double target_pos_y = planesVectors[AR_planar].aver_pos_y;
+    double target_pos_z = planesVectors[AR_planar].aver_pos_z;
     double plane_max_x = DBL_MIN;
     double plane_max_y = DBL_MIN;
     double plane_max_z = DBL_MIN;
@@ -712,9 +700,9 @@ main (int argc,
     
     // ======================= second =========================
     AR_planar = orderVectors[1];
-    target_pos_x = aver_pos_x[AR_planar];
-    target_pos_y = aver_pos_y[AR_planar];
-    target_pos_z = aver_pos_z[AR_planar];
+    target_pos_x = planesVectors[AR_planar].aver_pos_x;
+    target_pos_y = planesVectors[AR_planar].aver_pos_y;
+    target_pos_z = planesVectors[AR_planar].aver_pos_z;
     plane_max_x = DBL_MIN;
     plane_max_y = DBL_MIN;
     plane_max_z = DBL_MIN;
@@ -799,9 +787,9 @@ main (int argc,
 
     // ======================= third =========================
     AR_planar = orderVectors[2];
-    target_pos_x = aver_pos_x[AR_planar];
-    target_pos_y = aver_pos_y[AR_planar];
-    target_pos_z = aver_pos_z[AR_planar];
+    target_pos_x = planesVectors[AR_planar].aver_pos_x;
+    target_pos_y = planesVectors[AR_planar].aver_pos_y;
+    target_pos_z = planesVectors[AR_planar].aver_pos_z;
     plane_max_x = DBL_MIN;
     plane_max_y = DBL_MIN;
     plane_max_z = DBL_MIN;
@@ -1041,17 +1029,17 @@ savePCDfile(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, const char* fileName)
 }
 
 void
-findNeighbor(std::vector<uint32_t>& plane, uint32_t the_cluster_num, double the_normal_x, double the_normal_y, double the_normal_z)
+findNeighbor(std::vector<uint32_t>& plane, uint32_t the_cluster_num, double the_normal_x, double the_normal_y, double the_normal_z, int& size_temp, double& avn_x, double& avn_y, double& avn_z, double& avp_x, double& avp_y, double& avp_z)
 {
   plane.push_back(the_cluster_num);
   int the_cluster_int = clusters_int.find(the_cluster_num)->second;
-  ::avn_x += normal_vector_x[the_cluster_int];
-  ::avn_y += normal_vector_y[the_cluster_int];
-  ::avn_z += normal_vector_z[the_cluster_int];
-  ::avp_x += pos_x[the_cluster_int];
-  ::avp_y += pos_y[the_cluster_int];
-  ::avp_z += pos_z[the_cluster_int];
-  ::size_temp++;
+  avn_x += normal_vector_x[the_cluster_int];
+  avn_y += normal_vector_y[the_cluster_int];
+  avn_z += normal_vector_z[the_cluster_int];
+  avp_x += pos_x[the_cluster_int];
+  avp_y += pos_y[the_cluster_int];
+  avp_z += pos_z[the_cluster_int];
+  size_temp++;
   std::multimap<uint32_t,uint32_t>::iterator adjacency_itr = supervoxel_adjacency.begin ();
   std::pair <std::multimap<uint32_t,uint32_t>::iterator, std::multimap<uint32_t,uint32_t>::iterator> range 
                                                       = supervoxel_adjacency.equal_range(the_cluster_num);
@@ -1067,7 +1055,8 @@ findNeighbor(std::vector<uint32_t>& plane, uint32_t the_cluster_num, double the_
       the_normal_x = (1-mu)*the_normal_x+mu*normal_vector_x[neighbor_cluster_int];
       the_normal_y = (1-mu)*the_normal_y+mu*normal_vector_y[neighbor_cluster_int];
       the_normal_z = (1-mu)*the_normal_z+mu*normal_vector_z[neighbor_cluster_int];
-      findNeighbor(plane,neighbor_cluster,the_normal_x,the_normal_y,the_normal_z);
+      findNeighbor(plane,neighbor_cluster,the_normal_x,the_normal_y,the_normal_z,
+                   size_temp, avn_x, avn_y, avn_z, avp_x, avp_y, avp_z);
     }
   }
   return;
