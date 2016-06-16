@@ -85,7 +85,8 @@
 #include <ctime>
 
 //self-defined class
-//#include "planeObject.h"
+#include "planeObject.h"
+
 
 #define CURVATURE UINT32_MAX
 #define PLANE 0
@@ -119,7 +120,7 @@ bool use_single_cam_transform = false;
 // MPSS parameter
 //double pre_filter_threshold = 0.99;
 //Between supervoxels
-double parrallel_threshold;//0.8  //dot_product , threshold to consider as parrallel
+//double parrallel_threshold;//0.8  //dot_product , threshold to consider as parrallel
 // Between Surface
 double parrallel_filter;
 double distance_to_plane; //0.005,0.08
@@ -128,34 +129,13 @@ double curvature_ratio = 100;//todo
 //int    remain_ratio = 20;
 
 //Agglomerative Surface Growing Learning Rate
-double mu;
-
-
-
-class planeObject {
-public:
-
-    planeObject(std::vector<uint32_t>& p, const double& nx = 0, const double& ny = 0, const double& nz = 0,
-                const double& px = 0, const double& py = 0, const double& pz = 0, const float& var = 0) :
-                plane(p), aver_nor_x(nx), aver_nor_y(ny), aver_nor_z(nz),
-                aver_pos_x(px), aver_pos_y(py), aver_pos_z(pz), aver_var(var) {
-        //for(std::vector<uint32_t>::iterator it = p.begin(); it != p.end(); it++) {
-        //    plane.push_back(*it);
-        //}
-    }
-
-    std::vector<uint32_t> plane;
-    double aver_nor_x, aver_nor_y, aver_nor_z, aver_pos_x, aver_pos_y, aver_pos_z;
-    float aver_var;
-};
-
+//double mu;
 
 
 // global
 std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
 std::map<uint32_t, int> clusters_int;
 std::map<uint32_t, bool> clusters_used;
-std::vector<uint32_t> plane;
 std::vector< planeObject > planesVectors;
 std::vector<size_t> orderVectors;// Remember index of planesVectors to descending order
 //std::vector<double> aver_nor_x,aver_nor_y,aver_nor_z; 
@@ -171,6 +151,37 @@ float min_x=0, min_y=0, min_z=0;
 //double avn_x=0,avn_y=0,avn_z=0;
 //double avp_x=0, avp_y=0, avp_z=0;
 
+//cuda helper function
+size_t sizeOfClusters_int(const std::map<uint32_t, int>& map) {
+  size_t size = sizeof(map);
+  for(std::map<uint32_t, int>::const_iterator it = map.begin(); it != map.end(); it++) {
+    size += sizeof(it->first);
+    size += sizeof(it->second);
+  }
+  return size;
+}
+size_t sizeOfClusters_used(const std::map<uint32_t, bool>& map) {
+  size_t size = sizeof(map);
+  for(std::map<uint32_t, bool>::const_iterator it = map.begin(); it != map.end(); it++) {
+    size += sizeof(it->first);
+    size += sizeof(it->second);
+  }
+  return size;
+}
+size_t sizeOfMultiMap(const std::multimap<uint32_t, uint32_t>& map) {
+  size_t size = sizeof(map);
+  for(std::multimap<uint32_t, uint32_t>::const_iterator it = map.begin(); it != map.end(); it++) {
+    size += sizeof(it->first);
+    size += sizeof(it->second);
+  }
+  return size;
+}
+/*
+__global__ void labelWithGPU(std::multimap<uint32_t, uint32_t>&, std::map<uint32_t, int>&, std::map<uint32_t, bool>&,
+                             thrust::device_vector<double>&, thrust::device_vector<double>&, thrust::device_vector<double>&,
+                             thrust::device_vector<double>&, thrust::device_vector<double>&, thrust::device_vector<double>&,
+                             thrust::device_vector<planeObject>&);
+*/
 // handle the vtk stuff of visualization
 void addSupervoxelConnectionsToViewer (PointT &supervoxel_center,
                                        PointCloudT &adjacent_supervoxel_centers,
@@ -178,10 +189,12 @@ void addSupervoxelConnectionsToViewer (PointT &supervoxel_center,
                                        boost::shared_ptr<pcl::visualization::PCLVisualizer> & viewer);
 
 void savePCDfile(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, const char* fileName);
+/*
 void findNeighbor(std::vector<uint32_t>& plane, uint32_t the_cluster_num
                   , double the_normal_x, double the_normal_y, double the_normal_z
                   , int& size_temp, double& avn_x, double& avn_y, double& avn_z
                   , double& avp_x, double& avp_y, double& avp_z);
+*/
 void scaleAddCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr add_cloud_ptr, double plane_variance, double scale_ratio);
 size_t findProjectPoint(float x, float y, float z, pcl::PointCloud<pcl::PointXYZRGB>::Ptr augment_cloud, size_t AR_planar_label, float& new_x ,float& new_y, float& new_z);
 void replaceRGB_AR(pcl::PointCloud<pcl::PointXYZRGB>::Ptr augment_cloud, pcl::PointCloud<pcl::PointXYZRGBL>::Ptr result_cloud_ptr, size_t AR_planar);
@@ -193,12 +206,12 @@ main (int argc,
       char ** argv)
 {
   if (argc <= 5) {
-    PCL_INFO("Usage: ./ESD [supervoxel_scale] [input_point_cloud] [ransacThreshold] [parrallel_threshold] [mu] [parrallel_filter] [distance_to_plane] (-sr) (-apc [aug_point_cloud])\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 \n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -sr\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -sr -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.2 0.8 0.005 -apc my_pic.ply -sr\n");
+    PCL_INFO("Usage: ./ESD [supervoxel_scale] [input_point_cloud] [ransacThreshold] [parrallel_filter] [distance_to_plane] (-sr) (-apc [aug_point_cloud])\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 \n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -sr\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -sr -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -apc my_pic.ply -sr\n");
     PCL_INFO("Notice:\n");
     PCL_INFO("  [input_point_cloud] and [aug_point_cloud] supports .ply and .pcd\n");
     PCL_INFO("  -sr: show result\n");
@@ -236,10 +249,10 @@ main (int argc,
   PCL_INFO ("Loading pointcloud\n");
   float supervoxel_scale = atof(argv[1]);
   double ransacThreshold = atof(argv[3]);
-  parrallel_threshold = atof(argv[4]);
-  mu = atof(argv[5]);
-  parrallel_filter = atof(argv[6]);
-  distance_to_plane = atof(argv[7]);
+  //parrallel_threshold = atof(argv[4]);
+  //mu = atof(argv[5]);
+  parrallel_filter = atof(argv[4]);
+  distance_to_plane = atof(argv[5]);
   
   /// check if the provided pcd file contains normals
   pcl::PCLPointCloud2 input_pointcloud2;  //inpu_pointcloud2 ,new version of pcl
@@ -339,92 +352,15 @@ main (int argc,
   average_nor_x /= count; average_nor_y /= count; average_nor_z /= count;
 
   //===============================   MPSS  =================================
-  label_itr = supervoxel_clusters.begin();
   int clusters_belong_int=0;
-  int the_cluster_int;
   int size_max = 0;
-  int size_temp = 0;
   int neighbor_count = 0;
-  double the_normal_x=0, the_normal_y=0, the_normal_z=0; 
   int vector_int = 0;
-  uint32_t the_cluster_num;
-  int trial = 0;
-  //start labeling
-  while(label_itr != supervoxel_clusters.end() )
-  {
-    if( clusters_used.find(label_itr->first)->second==true )
-    {
-      label_itr++;
-      continue;
-    }
-    clusters_used.find(label_itr->first)->second = true;
-    trial++;
-    the_cluster_num = label_itr->first;
-    the_cluster_int = clusters_int.find(the_cluster_num)->second;
-    the_normal_x = normal_vector_x[the_cluster_int];
-    the_normal_y = normal_vector_y[the_cluster_int];
-    the_normal_z = normal_vector_z[the_cluster_int];
-    //std::cerr<<endl<<"x: "<<the_normal_x<<endl<<"y: "<<the_normal_y<<endl<<"z: "<<the_normal_z<<endl;
-    plane.clear();
-    int size_temp = 0;
-    double avp_x = 0;
-    double avp_y = 0;
-    double avp_z = 0;
-    double avn_x = 0;
-    double avn_y = 0;
-    double avn_z = 0;
-    findNeighbor(plane,the_cluster_num,the_normal_x,the_normal_y,the_normal_z,
-                 size_temp, avn_x, avn_y, avn_z, avp_x, avp_y, avp_z);
-    if(size_temp <= 1)
-      continue;
-    avn_x /= double(size_temp);
-    avn_y /= double(size_temp);
-    avn_z /= double(size_temp);
-    avp_x /= double(size_temp);
-    avp_y /= double(size_temp);
-    avp_z /= double(size_temp);
-// var is used to determine whether the plane is a curve or not.
-    std::vector<uint32_t>::iterator super_it = plane.begin();
-    double var_x=0,var_y=0,var_z=0;
-    for(;super_it!=plane.end();super_it++){
-      the_cluster_int = clusters_int.find(the_cluster_num)->second;
-      var_x += pow(normal_vector_x[the_cluster_int]-avn_x,2);
-      var_y += pow(normal_vector_y[the_cluster_int]-avn_y,2);
-      var_z += pow(normal_vector_z[the_cluster_int]-avn_z,2);
-    }
-    double var = (var_x+var_y+var_z)/double(size_temp);
-    //std::cout<<"Var x:"<<var_x<<",y:"<<var_y<<",z:"<<var_z<<endl;
-    //std::cout<<"Variance"<<var<<endl;
-    if(var < 0.1) {
-      bool new_plane = true;
-      //Planar Refinements
-      for(std::vector< planeObject >::iterator find_it = planesVectors.begin(); find_it!=planesVectors.end(); find_it++){
-        const double on_x = find_it->aver_nor_x;
-        const double on_y = find_it->aver_nor_y;
-        const double on_z = find_it->aver_nor_z;
-        const double op_x = find_it->aver_pos_x;
-        const double op_y = find_it->aver_pos_y;
-        const double op_z = find_it->aver_pos_z;
-        if(std::abs(avn_x*on_x +avn_y*on_y +avn_z*on_z) > parrallel_filter && 
-          std::abs((avn_x*avp_x + avn_y*avp_y + avn_z*avp_z) - (on_x*op_x + on_y*op_y + on_z*op_z)) < distance_to_plane ) {
-          new_plane = false;
-          double weight = plane.size() / double(plane.size()+find_it->plane.size());
-          find_it->aver_nor_x = (1-weight)*on_x + weight*avn_x;
-          find_it->aver_nor_y = (1-weight)*on_y + weight*avn_y;
-          find_it->aver_nor_z = (1-weight)*on_z + weight*avn_z;
-          find_it->aver_pos_x = (1-weight)*op_x + weight*avp_x;
-          find_it->aver_pos_y = (1-weight)*op_y + weight*avp_y;
-          find_it->aver_pos_z = (1-weight)*op_z + weight*avp_z;
-          find_it->plane.insert(find_it->plane.end(),plane.begin(),plane.end());
-          break;
-        }
-      }
-      if(new_plane == true){
-        planesVectors.push_back( planeObject(plane, avn_x, avn_y, avn_z, avp_x, avp_y, avp_z, var) );
-      }
-    }
 
-  }
+  //cuda
+  gpu(supervoxel_adjacency, clusters_int, clusters_used, normal_vector_x, normal_vector_y, normal_vector_z,
+      pos_x, pos_y, pos_z, planesVectors);
+
   //time usage due
   duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
   std::cerr<<"time usage: "<< duration <<'\n';
@@ -445,23 +381,6 @@ main (int argc,
   // For finding max & relabel XYZL for visualization
   for(;plane_it != planesVectors.end(); plane_it++){
     // ================== relabel ================
-/*
-    if(*it==CURVATURE){
-      size_t diff = plane_it-planesVectors.begin();
-      label2norm_x.insert(std::pair<uint32_t,float>(planeNo,aver_nor_x[diff]));
-      label2norm_y.insert(std::pair<uint32_t,float>(planeNo,aver_nor_y[diff]));
-      label2norm_z.insert(std::pair<uint32_t,float>(planeNo,aver_nor_z[diff]));
-      label2pos_x.insert(std::pair<uint32_t,float>(planeNo,aver_pos_x[diff]));
-      label2pos_y.insert(std::pair<uint32_t,float>(planeNo,aver_pos_y[diff]));
-      label2pos_z.insert(std::pair<uint32_t,float>(planeNo,aver_pos_z[diff]));
-      label2var.insert(std::pair<uint32_t,float>(planeNo,aver_var[diff]));
-      //std::cout<<"label2norm: No."<<planeNo<<"  "<<diff<<","<<aver_nor_x[diff]<<","<<aver_nor_y[diff]<<","<<aver_nor_z[diff]<<endl;
-      for(it = plane_it->begin()+1; it!= plane_it->end(); it++)
-        sv_label_to_seg_label_map[*it]=planeNo;
-      planeNo++;
-    }
-*/
-//    else{
       label2norm_x.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_nor_x));
       label2norm_y.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_nor_y));
       label2norm_z.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_nor_z));
@@ -473,7 +392,6 @@ main (int argc,
       for(std::vector<uint32_t>::iterator it = plane_it->plane.begin(); it!= plane_it->plane.end(); it++)
         sv_label_to_seg_label_map[*it]=planeNo;
       planeNo++;
-//    }
     // ================== findMax ================
     if(plane_it->plane.size() > sizetemp){
       sizetemp = plane_it->plane.size();
@@ -989,7 +907,6 @@ main (int argc,
 
 
 /// -------------------------| Definitions of helper functions|-------------------------
-
 void
 addSupervoxelConnectionsToViewer (PointT &supervoxel_center,
                                   PointCloudT &adjacent_supervoxel_centers,
@@ -1028,39 +945,6 @@ savePCDfile(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, const char* fileName)
     pcl::io::savePCDFileASCII(fileName, *cloud);
 }
 
-void
-findNeighbor(std::vector<uint32_t>& plane, uint32_t the_cluster_num, double the_normal_x, double the_normal_y, double the_normal_z, int& size_temp, double& avn_x, double& avn_y, double& avn_z, double& avp_x, double& avp_y, double& avp_z)
-{
-  plane.push_back(the_cluster_num);
-  int the_cluster_int = clusters_int.find(the_cluster_num)->second;
-  avn_x += normal_vector_x[the_cluster_int];
-  avn_y += normal_vector_y[the_cluster_int];
-  avn_z += normal_vector_z[the_cluster_int];
-  avp_x += pos_x[the_cluster_int];
-  avp_y += pos_y[the_cluster_int];
-  avp_z += pos_z[the_cluster_int];
-  size_temp++;
-  std::multimap<uint32_t,uint32_t>::iterator adjacency_itr = supervoxel_adjacency.begin ();
-  std::pair <std::multimap<uint32_t,uint32_t>::iterator, std::multimap<uint32_t,uint32_t>::iterator> range 
-                                                      = supervoxel_adjacency.equal_range(the_cluster_num);
-  for(adjacency_itr = range.first; adjacency_itr != range.second; adjacency_itr++){
-    uint32_t neighbor_cluster = adjacency_itr->second;
-    int neighbor_cluster_int = clusters_int.find(neighbor_cluster)->second;
-    // Check whether the neighbor has normals like a plane
-    // Supervoxel has normal of 1
-    //double adj_parrallel_threshold = parrallel_threshold * (1+(pos_z[neighbor_cluster_int] - min_z));
-    if(the_normal_x * normal_vector_x[neighbor_cluster_int] + the_normal_y * normal_vector_y[neighbor_cluster_int] +
-        the_normal_z * normal_vector_z[neighbor_cluster_int] > parrallel_threshold && clusters_used.find(neighbor_cluster)->second == false){
-      clusters_used.find(neighbor_cluster)->second = true;
-      the_normal_x = (1-mu)*the_normal_x+mu*normal_vector_x[neighbor_cluster_int];
-      the_normal_y = (1-mu)*the_normal_y+mu*normal_vector_y[neighbor_cluster_int];
-      the_normal_z = (1-mu)*the_normal_z+mu*normal_vector_z[neighbor_cluster_int];
-      findNeighbor(plane,neighbor_cluster,the_normal_x,the_normal_y,the_normal_z,
-                   size_temp, avn_x, avn_y, avn_z, avp_x, avp_y, avp_z);
-    }
-  }
-  return;
-}
 
 bool 
 loadPointCloudFile(const std::string& fileName, pcl::PCLPointCloud2& pointCloud)

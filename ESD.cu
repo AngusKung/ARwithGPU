@@ -124,7 +124,7 @@ bool use_single_cam_transform = false;
 // MPSS parameter
 //double pre_filter_threshold = 0.99;
 //Between supervoxels
-double parrallel_threshold;//0.8  //dot_product , threshold to consider as parrallel
+//double parrallel_threshold;//0.8  //dot_product , threshold to consider as parrallel
 // Between Surface
 double parrallel_filter;
 double distance_to_plane; //0.005,0.08
@@ -253,8 +253,8 @@ main (int argc,
   PCL_INFO ("Loading pointcloud\n");
   float supervoxel_scale = atof(argv[1]);
   double ransacThreshold = atof(argv[3]);
-  parrallel_threshold = atof(argv[4]);
-  mu = atof(argv[5]);
+  //parrallel_threshold = atof(argv[4]);
+  //mu = atof(argv[5]);
   parrallel_filter = atof(argv[6]);
   distance_to_plane = atof(argv[7]);
   
