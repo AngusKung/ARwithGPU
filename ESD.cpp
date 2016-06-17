@@ -86,7 +86,10 @@
 
 //self-defined class
 #include "planeObject.h"
-
+#include "supervoxel.h"
+#include "planeVoxel.h"
+#include "planesVector.h"
+#include "GPU.h"
 
 #define CURVATURE UINT32_MAX
 #define PLANE 0
@@ -120,23 +123,23 @@ bool use_single_cam_transform = false;
 // MPSS parameter
 //double pre_filter_threshold = 0.99;
 //Between supervoxels
-//double parrallel_threshold;//0.8  //dot_product , threshold to consider as parrallel
+double parrallel_threshold=0.8;//0.8  //dot_product , threshold to consider as parrallel
 // Between Surface
-double parrallel_filter;
-double distance_to_plane; //0.005,0.08
+double parrallel_filter=0.8;
+double distance_to_plane=0.05; //0.005,0.08
 double curvature_ratio = 100;//todo
 //double planes_difference = 0.1;
 //int    remain_ratio = 20;
 
 //Agglomerative Surface Growing Learning Rate
-//double mu;
+double mu=0.2;
 
 
 // global
 std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
 std::map<uint32_t, int> clusters_int;
 std::map<uint32_t, bool> clusters_used;
-std::vector< planeObject > planesVectors;
+std::vector<planeObject> planesVectors;
 std::vector<size_t> orderVectors;// Remember index of planesVectors to descending order
 //std::vector<double> aver_nor_x,aver_nor_y,aver_nor_z; 
 //std::vector<double> aver_pos_x,aver_pos_y,aver_pos_z; 
@@ -152,30 +155,6 @@ float min_x=0, min_y=0, min_z=0;
 //double avp_x=0, avp_y=0, avp_z=0;
 
 //cuda helper function
-size_t sizeOfClusters_int(const std::map<uint32_t, int>& map) {
-  size_t size = sizeof(map);
-  for(std::map<uint32_t, int>::const_iterator it = map.begin(); it != map.end(); it++) {
-    size += sizeof(it->first);
-    size += sizeof(it->second);
-  }
-  return size;
-}
-size_t sizeOfClusters_used(const std::map<uint32_t, bool>& map) {
-  size_t size = sizeof(map);
-  for(std::map<uint32_t, bool>::const_iterator it = map.begin(); it != map.end(); it++) {
-    size += sizeof(it->first);
-    size += sizeof(it->second);
-  }
-  return size;
-}
-size_t sizeOfMultiMap(const std::multimap<uint32_t, uint32_t>& map) {
-  size_t size = sizeof(map);
-  for(std::multimap<uint32_t, uint32_t>::const_iterator it = map.begin(); it != map.end(); it++) {
-    size += sizeof(it->first);
-    size += sizeof(it->second);
-  }
-  return size;
-}
 /*
 __global__ void labelWithGPU(std::multimap<uint32_t, uint32_t>&, std::map<uint32_t, int>&, std::map<uint32_t, bool>&,
                              thrust::device_vector<double>&, thrust::device_vector<double>&, thrust::device_vector<double>&,
@@ -206,12 +185,12 @@ main (int argc,
       char ** argv)
 {
   if (argc <= 5) {
-    PCL_INFO("Usage: ./ESD [supervoxel_scale] [input_point_cloud] [ransacThreshold] [parrallel_filter] [distance_to_plane] (-sr) (-apc [aug_point_cloud])\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 \n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -sr\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -sr -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd 0.001 0.8 0.005 -apc my_pic.ply -sr\n");
+    PCL_INFO("Usage: ./ESD [supervoxel_scale] [input_point_cloud] (-sr) (-apc [aug_point_cloud])\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd \n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -sr\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -sr -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -apc my_pic.ply -sr\n");
     PCL_INFO("Notice:\n");
     PCL_INFO("  [input_point_cloud] and [aug_point_cloud] supports .ply and .pcd\n");
     PCL_INFO("  -sr: show result\n");
@@ -248,11 +227,11 @@ main (int argc,
   std::string pcd_filename = argv[2];
   PCL_INFO ("Loading pointcloud\n");
   float supervoxel_scale = atof(argv[1]);
-  double ransacThreshold = atof(argv[3]);
+  double ransacThreshold = 0.005;//atof(argv[3]);
   //parrallel_threshold = atof(argv[4]);
   //mu = atof(argv[5]);
-  parrallel_filter = atof(argv[4]);
-  distance_to_plane = atof(argv[5]);
+  //parrallel_filter = atof(argv[4]);
+  //distance_to_plane = atof(argv[5]);
   
   /// check if the provided pcd file contains normals
   pcl::PCLPointCloud2 input_pointcloud2;  //inpu_pointcloud2 ,new version of pcl
@@ -298,8 +277,8 @@ main (int argc,
   // Supervoxel Stuff
   /// Preparation of Input: Supervoxel Oversegmentation
 
-  pcl::SupervoxelClustering<PointT> super (voxel_resolution, seed_resolution, use_single_cam_transform);
-  super.setUseSingleCameraTransform(use_single_cam_transform);
+  pcl::SupervoxelClustering<PointT> super (voxel_resolution, seed_resolution);//, use_single_cam_transform);
+  //super.setUseSingleCameraTransform(use_single_cam_transform);
   super.setInputCloud (input_cloud_ptr);
   if (has_normals)
     super.setNormalCloud (input_normals_ptr);
@@ -334,18 +313,21 @@ main (int argc,
 
   int i=0;
   float average_nor_x =0.0; double average_nor_y = 0.0; double average_nor_z =0.0;
+  std::vector<supervoxel> supervoxels;
   for (; label_itr != supervoxel_clusters.end (); label_itr++)
     {
-      pcl::Supervoxel<PointT>::Ptr supervoxel = label_itr->second;
-      normal_vector_x.push_back(supervoxel->normal_.normal_x);
-      normal_vector_y.push_back(supervoxel->normal_.normal_y);
-      normal_vector_z.push_back(supervoxel->normal_.normal_z);
-      pos_x.push_back(supervoxel->centroid_.x);
-      pos_y.push_back(supervoxel->centroid_.y);
-      pos_z.push_back(supervoxel->centroid_.z);
+      pcl::Supervoxel<PointT>::Ptr sv = label_itr->second;
+      normal_vector_x.push_back(sv->normal_.normal_x);
+      normal_vector_y.push_back(sv->normal_.normal_y);
+      normal_vector_z.push_back(sv->normal_.normal_z);
+      pos_x.push_back(sv->centroid_.x);
+      pos_y.push_back(sv->centroid_.y);
+      pos_z.push_back(sv->centroid_.z);
       clusters_int.insert(std::pair<uint32_t,int>(label_itr->first,i));
       clusters_used.insert(std::pair<uint32_t,bool>(label_itr->first,false));
       i++;
+      uint32_t cluster_num = label_itr->first;
+      supervoxels.push_back(supervoxel(cluster_num,i,false));
     }
     float count = float(i);
     count/=3.0;
@@ -356,9 +338,29 @@ main (int argc,
   int size_max = 0;
   int neighbor_count = 0;
   int vector_int = 0;
-
+  for(size_t idx = 0;idx<supervoxels.size();idx++){
+      uint32_t the_cluster_num = supervoxels[idx].cluster_num;
+      std::multimap<uint32_t,uint32_t>::iterator adjacency_itr = supervoxel_adjacency.begin ();
+      std::pair <std::multimap<uint32_t,uint32_t>::iterator, std::multimap<uint32_t,uint32_t>::iterator> range
+        = supervoxel_adjacency.equal_range(the_cluster_num);
+      size_t range_size = 0;
+      for(adjacency_itr = range.first; adjacency_itr != range.second; adjacency_itr++)
+        range_size++;
+      std::vector<supervoxel*> sv_vector_ptr;
+      for(adjacency_itr = range.first; adjacency_itr != range.second; adjacency_itr++){
+        uint32_t neighbor_cluster = adjacency_itr->second;
+        for(std::vector<supervoxel>::iterator sv_itr = supervoxels.begin(); sv_itr != supervoxels.end();sv_itr++){
+          if(sv_itr->cluster_num != neighbor_cluster)
+            break;
+          //sv_vector_ptr.push_back(&sv_itr);
+        }
+      if(sv_vector_ptr.size()!= range_size)
+        std::cerr<<"Unexpected size mismatch when generating vector<supervoxel*> *"<<endl;
+      //supervoxels[idx].setNeighbors(sv_vector_ptr);
+      }
+  }
   //cuda
-  gpu(supervoxel_adjacency, clusters_int, clusters_used, normal_vector_x, normal_vector_y, normal_vector_z,
+  gpu(supervoxels, normal_vector_x, normal_vector_y, normal_vector_z,
       pos_x, pos_y, pos_z, planesVectors);
 
   //time usage due
@@ -387,14 +389,18 @@ main (int argc,
       label2pos_x.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_pos_x));
       label2pos_y.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_pos_y));
       label2pos_z.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_pos_z));
-      label2var.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_var));
+      //label2var.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_var));
       //std::cout<<"label2norm: No."<<planeNo<<"  "<<diff<<","<<aver_nor_x[diff]<<","<<aver_nor_y[diff]<<","<<aver_nor_z[diff]<<endl;
-      for(std::vector<uint32_t>::iterator it = plane_it->plane.begin(); it!= plane_it->plane.end(); it++)
-        sv_label_to_seg_label_map[*it]=planeNo;
+      
+      for(superVoxel* voxel_it = plane_it.begin; voxel_it != NULL; voxel_it = voxel_it->next) {
+        sv_label_to_seg_label_map[voxel_it->num]=planeNo;
+      }
+//      for(std::vector<uint32_t>::iterator it = plane_it->plane.begin(); it!= plane_it->plane.end(); it++)
+//        sv_label_to_seg_label_map[*it]=planeNo;
       planeNo++;
     // ================== findMax ================
-    if(plane_it->plane.size() > sizetemp){
-      sizetemp = plane_it->plane.size();
+    if(plane_it->size > sizetemp){
+      sizetemp = plane_it->size;
       max_planar = plane_it - planesVectors.begin();
     }
     // ================== orderVectors =======================
@@ -406,7 +412,7 @@ main (int argc,
     else{
       bool atEnd = true;
       for(order_it = orderVectors.begin();order_it!=orderVectors.end(); order_it++){
-        if(plane_it->plane.size()>=planesVectors[*order_it].plane.size()){
+        if(plane_it->size>=planesVectors[*order_it].size){
           orderVectors.insert(order_it,orderNo);
           atEnd = false;
           break;
