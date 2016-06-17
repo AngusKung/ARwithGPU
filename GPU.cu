@@ -196,12 +196,12 @@ void copyPlaneToHost(planesVector* planesVectors_gpu, int numOfThreads, std::vec
         }
     }
 }
-
+/*
 __global__ void test_t(t) {
     int hi = 5;
     for(test* i = t->)
 }
-
+*/
 void gpu(const std::vector<supervoxel>& voxels,
          const std::vector<double>& normal_vector_x,
          const std::vector<double>& normal_vector_y,
