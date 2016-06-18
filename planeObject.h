@@ -1,4 +1,4 @@
-#include "planeVoxel.h"
+//#include "planeVoxel.h"
 #pragma once
 
 class planeObject {

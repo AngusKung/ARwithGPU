@@ -243,10 +243,6 @@ main (int argc,
   pcl::fromPCLPointCloud2 (input_pointcloud2, *input_cloud_ptr);
   PCL_INFO ("Done making cloud\n");
 
-  //time usage
-  std::clock_t start;
-  double duration;
-  start = std::clock();
 /// -----------------------------------|  Main Computation  |-----------------------------------
   // Default values 
   //finding max & min in the point cloud
@@ -297,9 +293,6 @@ main (int argc,
 
   PCL_INFO ("Getting supervoxel adjacency\n");
   super.getSupervoxelAdjacency (supervoxel_adjacency);
-  //time usage due
-  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-  std::cerr<<"sv time usage: "<< duration <<'\n';
 
   //===============================   MPSS parameter evaluation   =================================
   std::map<uint32_t, pcl::Supervoxel<PointT>::Ptr>::iterator label_itr = supervoxel_clusters.begin();
@@ -359,6 +352,10 @@ main (int argc,
       //supervoxels[idx].setNeighbors(sv_vector_ptr);
       }
   }
+  //time usage
+  std::clock_t start;
+  double duration;
+  start = std::clock();
   //cuda
   gpu(supervoxels, normal_vector_x, normal_vector_y, normal_vector_z,
       pos_x, pos_y, pos_z, planesVectors);

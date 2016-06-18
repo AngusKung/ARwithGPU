@@ -51,6 +51,15 @@ __device__ void append(planeObject& be_appended, planeObject& to_append) {
     be_appended.size += to_append.size;
 }
 */
+__device__ void resetPlane(planeObject* plane) {
+                plane->size = 0;
+                plane->aver_nor_x = 0;
+                plane->aver_nor_y = 0;
+                plane->aver_nor_z = 0;
+                plane->aver_pos_x = 0;
+                plane->aver_pos_y = 0;
+                plane->aver_pos_z = 0;
+}
 __device__ void
 //todo: add plane_id
 findNeighbor(planeObject& plane, supervoxel* v_ptr, const int& plane_id,
@@ -149,6 +158,7 @@ __global__ void labelWithGPU(supervoxel* voxels, int v_size,
         if(voxels[j].plane_id == plane_id) voxels[j].plane_id = -1;
         break;
       }
+      resetPlane(plane);
       continue;
     }
 /*//delete=======
@@ -177,36 +187,31 @@ __global__ void labelWithGPU(supervoxel* voxels, int v_size,
         //Planar Refinements
 //for and while modify to one for through the whole planesVectors
     for(int j = 0; j != pv_size; ++j) {
-            const double on_x = p_v[j].aver_nor_x;
-            const double on_y = p_v[j].aver_nor_y;
-            const double on_z = p_v[j].aver_nor_z;
-            const double op_x = p_v[j].aver_pos_x;
-            const double op_y = p_v[j].aver_pos_y;
-            const double op_z = p_v[j].aver_pos_z;
-            if(std::abs(avn_x*on_x +avn_y*on_y +avn_z*on_z) > parrallel_filter && 
-               std::abs((avn_x*avp_x + avn_y*avp_y + avn_z*avp_z) - (on_x*op_x + on_y*op_y + on_z*op_z)) < distance_to_plane ) {
-                new_plane = false;
-                double weight = size_temp / double(size_temp + p_v[j].size);
-                p_v[j].aver_nor_x = (1-weight)*on_x + weight*avn_x ;
-                p_v[j].aver_nor_y = (1-weight)*on_y + weight*avn_y ;
-                p_v[j].aver_nor_z = (1-weight)*on_z + weight*avn_z ;
-                p_v[j].aver_pos_x = (1-weight)*op_x + weight*avp_x ;
-                p_v[j].aver_pos_y = (1-weight)*op_y + weight*avp_y ;
-                p_v[j].aver_pos_z = (1-weight)*op_z + weight*avp_z ;
+        if(p_v[j].size == 0) continue;
+        const double on_x = p_v[j].aver_nor_x;
+        const double on_y = p_v[j].aver_nor_y;
+        const double on_z = p_v[j].aver_nor_z;
+        const double op_x = p_v[j].aver_pos_x;
+        const double op_y = p_v[j].aver_pos_y;
+        const double op_z = p_v[j].aver_pos_z;
+        if(std::abs(avn_x*on_x +avn_y*on_y +avn_z*on_z) > parrallel_filter && 
+           std::abs((avn_x*avp_x + avn_y*avp_y + avn_z*avp_z) - (on_x*op_x + on_y*op_y + on_z*op_z)) < distance_to_plane ) {
+           new_plane = false;
+           double weight = size_temp / double(size_temp + p_v[j].size);
+           p_v[j].aver_nor_x = (1-weight)*on_x + weight*avn_x ;
+           p_v[j].aver_nor_y = (1-weight)*on_y + weight*avn_y ;
+           p_v[j].aver_nor_z = (1-weight)*on_z + weight*avn_z ;
+           p_v[j].aver_pos_x = (1-weight)*op_x + weight*avp_x ;
+           p_v[j].aver_pos_y = (1-weight)*op_y + weight*avp_y ;
+           p_v[j].aver_pos_z = (1-weight)*op_z + weight*avp_z ;
 //todo: update the size of the plane to be appended, and reset the variables of plane
-                p_v[j].size += plane->size;
-                plane->size = 0;
-                plane->aver_nor_x = 0;
-                plane->aver_nor_y = 0;
-                plane->aver_nor_z = 0;
-                plane->aver_pos_x = 0;
-                plane->aver_pos_y = 0;
-                plane->aver_pos_z = 0;
-                //append(*po_ptr, plane);
-                break;
-            }
+           p_v[j].size += plane->size;
+           resetPlane(plane);
+           //append(*po_ptr, plane);
+           break;
+        }
     }
-        if(new_plane == true){
+    if(new_plane == true){
 //todo: plane_id++
         plane->aver_nor_x = avn_x;
         plane->aver_nor_y = avn_y;
@@ -217,13 +222,14 @@ __global__ void labelWithGPU(supervoxel* voxels, int v_size,
         
         plane_id++;
         //push_back_plane( planesVectors, plane );
-        }
+    }
   }
 }
 
 void copyPlaneToHost(planeObject* planesVectors_cpu, const int& pv_size, std::vector<planeObject>& planesVectors) {
 //todo: replace for and while with a for through the whole planesVectors_cpu
     for(int i = 0; i != pv_size; ++i) {
+        if(planesVectors_cpu[i].size == 0) continue;
         planesVectors.push_back(planesVectors_cpu[i]);
     }
 }
