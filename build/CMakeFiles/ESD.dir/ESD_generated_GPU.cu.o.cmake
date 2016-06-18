@@ -70,7 +70,7 @@ set(generated_file_internal "/home/b01901011/ARwithGPU/build/CMakeFiles/ESD.dir/
 set(generated_cubin_file_internal "/home/b01901011/ARwithGPU/build/CMakeFiles/ESD.dir//./ESD_generated_GPU.cu.o.cubin.txt") # path
 
 set(CUDA_NVCC_EXECUTABLE "/usr/local/cuda/bin/nvcc") # path
-set(CUDA_NVCC_FLAGS -std=c++11 ;; ) # list
+set(CUDA_NVCC_FLAGS -std=c++11 -g -G ;; ) # list
 # Build specific configuration flags
 set(CUDA_NVCC_FLAGS_DEBUG  ; )
 set(CUDA_NVCC_FLAGS_MINSIZEREL  ; )

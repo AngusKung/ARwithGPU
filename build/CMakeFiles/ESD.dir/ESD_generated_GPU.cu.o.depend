@@ -3,7 +3,6 @@ SET(CUDA_NVCC_DEPEND
   "/home/b01901011/ARwithGPU/GPU.cu"
  "/home/b01901011/ARwithGPU/SyncedMemory.h"
  "/home/b01901011/ARwithGPU/planeObject.h"
- "/home/b01901011/ARwithGPU/planeVoxel.h"
  "/home/b01901011/ARwithGPU/supervoxel.h"
  "/usr/include/_G_config.h"
  "/usr/include/alloca.h"

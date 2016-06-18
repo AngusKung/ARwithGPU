@@ -23,6 +23,6 @@ public:
     uint32_t cluster_num;
     int      cluster_int;
     bool     used;
-    supervoxel** neighbors;
+    int* neighbors;
     int          n_size;
 };

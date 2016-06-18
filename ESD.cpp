@@ -360,6 +360,7 @@ main (int argc,
   double duration;
   start = std::clock();
   //cuda
+  std::cerr<<"Size of supervoxel: "<<sizeof(supervoxel)<<endl;
   std::cerr<<"Calling GPU functions"<<endl;
   gpu(supervoxels, normal_vector_x, normal_vector_y, normal_vector_z,
       pos_x, pos_y, pos_z, planesObjectVectors);
@@ -369,9 +370,12 @@ main (int argc,
   std::cerr<<"time usage: "<< duration <<'\n';
 
   // Fix planesVectors
+  int size_count = 0;
   for(size_t idx = 0;idx<supervoxels.size(); idx++){
-    std::cerr<<supervoxels[idx].plane_id<<endl;
+    std::cerr<<supervoxels[idx].plane_id<<" ";
+    size_count++;
   }
+  std::cerr<<endl<<size_count<<endl;
   //comment
   /*
   pcl::PointXYZRGBA the_point;

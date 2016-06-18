@@ -19,7 +19,7 @@ __global__ void labelWithGPU(supervoxel* voxels, int v_size,
 
 void copyPlaneToHost(thrust::device_vector<planeObject>& planesVectors){};
 */
-void gpu(const std::vector<supervoxel>& voxels,
+void gpu(std::vector<supervoxel>& voxels,
          const std::vector<double>& normal_vector_x,
          const std::vector<double>& normal_vector_y,
          const std::vector<double>& normal_vector_z,

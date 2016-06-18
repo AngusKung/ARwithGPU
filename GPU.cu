@@ -88,8 +88,8 @@ findNeighbor(planeObject& plane, supervoxel* v_ptr, const int& plane_id,
 
 //==========ORIGINAL CODE===============
   for(int i = 0; i != v_ptr->n_size; ++i) {
-    supervoxel* neighbor = v_ptr->neighbors[i];
-    int neighbor_cluster_int = neighbor->cluster_int;
+//    supervoxel* neighbor = v_ptr->neighbors[i];
+    int neighbor_cluster_int = v_ptr->neighbors[i];
     // Check whether the neighbor has normals like a plane
     // Supervoxel has normal of 1
     if(the_normal_x * normal_vector_x[neighbor_cluster_int] + the_normal_y * normal_vector_y[neighbor_cluster_int] +
@@ -156,9 +156,11 @@ __global__ void labelWithGPU(supervoxel* voxels, int v_size,
                  normal_vector_x, normal_vector_y, normal_vector_z,
                  pos_x, pos_y, pos_z);
     size_temp = plane->size;
+    for(int j = 0; j != v_size; ++j)
+        voxels[j].plane_id = size_temp;
     if(size_temp <= 1) {
       for(int j = 0; j != v_size; ++j) {
-        if(voxels[j].plane_id == plane_id) voxels[j].plane_id = -1;
+        //if(voxels[j].plane_id == plane_id) voxels[j].plane_id = -1;
         break;
       }
       resetPlane(plane);
@@ -243,7 +245,7 @@ __global__ void test_t(t) {
     for(test* i = t->)
 }
 */
-void gpu(const std::vector<supervoxel>& voxels,
+void gpu(std::vector<supervoxel>& voxels,
          const std::vector<double>& normal_vector_x,
          const std::vector<double>& normal_vector_y,
          const std::vector<double>& normal_vector_z,
@@ -262,11 +264,6 @@ void gpu(const std::vector<supervoxel>& voxels,
 //================
 */
 
-  int v_size;//nvx_size, nvy_size, nvz_size, px_size, py_size, pz_size, pv_size;
-  //read only
-  thrust::device_vector<supervoxel> voxels_gpu_v(voxels.begin(), voxels.end());
-  supervoxel* voxels_gpu = thrust::raw_pointer_cast(&voxels_gpu_v[0]);
-  v_size = voxels_gpu_v.size();
 /*
   size_t s_a_size = sizeOfMultiMap(supervoxel_adjacency);
   std::multimap<uint32_t, uint32_t>* supervoxel_adjacency_cpu = &supervoxel_adjacency;
@@ -274,22 +271,58 @@ void gpu(const std::vector<supervoxel>& voxels,
   cudaMalloc((void**) &supervoxel_adjacency_gpu, s_a_size);
   cudaMemcpy(supervoxel_adjacency_gpu, &supervoxel_adjacency, s_a_size, cudaMemcpyHostToDevice);
 */
-  thrust::device_vector<double> normal_vector_x_gpu_v(normal_vector_x.begin(), normal_vector_x.end());
-  double* normal_vector_x_gpu = thrust::raw_pointer_cast(&normal_vector_x_gpu_v[0]);
-  thrust::device_vector<double> normal_vector_y_gpu_v(normal_vector_y.begin(), normal_vector_y.end());
-  double* normal_vector_y_gpu = thrust::raw_pointer_cast(&normal_vector_y_gpu_v[0]);
-  thrust::device_vector<double> normal_vector_z_gpu_v(normal_vector_z.begin(), normal_vector_z.end());
-  double* normal_vector_z_gpu = thrust::raw_pointer_cast(&normal_vector_z_gpu_v[0]);
+  int v_size;//nvx_size, nvy_size, nvz_size, px_size, py_size, pz_size, pv_size;
+  //read only
+  v_size = voxels.size();
+  supervoxel* voxels_gpu;
+  supervoxel* voxels_cpu = new supervoxel [v_size];
+  for(int i = 0; i != v_size; ++i) {
+    voxels_cpu[i] = voxels[i];
+  }
+  cudaMalloc((void**) &voxels_gpu, (size_t)v_size*sizeof(supervoxel));
+  for(int i = 0; i != v_size; ++i) {
+    supervoxel* voxel = &voxels_cpu[i];
 
-  thrust::device_vector<double> pos_x_gpu_v(pos_x.begin(), pos_x.end());
-  double* pos_x_gpu = thrust::raw_pointer_cast(&pos_x_gpu_v[0]);
-  thrust::device_vector<double> pos_y_gpu_v(pos_y.begin(), pos_y.end());
-  double* pos_y_gpu = thrust::raw_pointer_cast(&pos_y_gpu_v[0]);
-  thrust::device_vector<double> pos_z_gpu_v(pos_z.begin(), pos_z.end());
-  double* pos_z_gpu = thrust::raw_pointer_cast(&pos_z_gpu_v[0]);
+    int* neighbor_gpu;
+    cudaMalloc((void**) &neighbor_gpu, (size_t)voxel->n_size*sizeof(supervoxel*));
+    cudaMemcpy(neighbor_gpu, voxel->neighbors, (size_t)voxel->n_size*sizeof(supervoxel*), cudaMemcpyHostToDevice);
+    voxel->neighbors = neighbor_gpu;
+  }
+  cudaMemcpy(voxels_gpu, voxels_cpu, (size_t)v_size*sizeof(supervoxel), cudaMemcpyHostToDevice);
+
+  int nvx_size = normal_vector_x.size();
+  double* normal_vector_x_gpu;
+  cudaMalloc((void**) &normal_vector_x_gpu, (size_t)nvx_size*sizeof(double));
+  cudaMemcpy(normal_vector_x_gpu, &normal_vector_x, (size_t)nvx_size*sizeof(double), cudaMemcpyHostToDevice);
+  
+  int nvy_size = normal_vector_y.size();
+  double* normal_vector_y_gpu;
+  cudaMalloc((void**) &normal_vector_y_gpu, (size_t)nvy_size*sizeof(double));
+  cudaMemcpy(normal_vector_y_gpu, &normal_vector_y, (size_t)nvy_size*sizeof(double), cudaMemcpyHostToDevice);
+
+  int nvz_size = normal_vector_z.size();
+  double* normal_vector_z_gpu;
+  cudaMalloc((void**) &normal_vector_z_gpu, (size_t)nvz_size*sizeof(double));
+  cudaMemcpy(normal_vector_z_gpu, &normal_vector_z, (size_t)nvz_size*sizeof(double), cudaMemcpyHostToDevice);
+
+  int px_size = pos_x.size();
+  double* pos_x_gpu;
+  cudaMalloc((void**) &pos_x_gpu, (size_t)px_size*sizeof(double));
+  cudaMemcpy(pos_x_gpu, &pos_x, (size_t)px_size*sizeof(double), cudaMemcpyHostToDevice);
+
+  int py_size = pos_y.size();
+  double* pos_y_gpu;
+  cudaMalloc((void**) &pos_y_gpu, (size_t)py_size*sizeof(double));
+  cudaMemcpy(pos_y_gpu, &pos_y, (size_t)py_size*sizeof(double), cudaMemcpyHostToDevice);
+
+  int pz_size = pos_z.size();
+  double* pos_z_gpu;
+  cudaMalloc((void**) &pos_z_gpu, (size_t)pz_size*sizeof(double));
+  cudaMemcpy(pos_z_gpu, &pos_z, (size_t)pz_size*sizeof(double), cudaMemcpyHostToDevice);
+
   //read and write
-  //thrust::device_vector<planeObject> planesVectors_gpu_v;
-  //planeObject* planesVectors_gpu = thrust::raw_pointer_cast(&planesVectors_gpu_v[0]);
+  //std::vector<planeObject> planesVectors_gpu_v;
+  //planeObject* planesVectors_gpu =  (&planesVectors_gpu_v[0]);
 //  pv_size = planesVectors_gpu_v.size();
   //start labeling
   int numOfThreads = ( v_size % EXE_PER_THREAD)? v_size/EXE_PER_THREAD+1: v_size/EXE_PER_THREAD;
@@ -301,11 +334,29 @@ void gpu(const std::vector<supervoxel>& voxels,
   planeObject* planesVectors_gpu = pv_sync.get_gpu_rw();
  // cudaMalloc((void**) &planesVectors_gpu, numOfThreads);
  // cudaMemcpy(planesVectors_gpu, planesVectors_cpu, numOfThreads, cudaMemcpyHostToDevice);
+
   labelWithGPU<<<1, numOfThreads>>>(voxels_gpu, v_size,
                                     normal_vector_x_gpu,  normal_vector_y_gpu, normal_vector_z_gpu,
                                     pos_x_gpu, pos_y_gpu, pos_z_gpu, planesVectors_gpu);
+
  // cudaMemcpy(planesVectors_cpu, planesVectors_gpu, numOfThreads, cudaMemcpyDeviceToHost);
   copyPlaneToHost(planesVectors_cpu, pv_size, planesVectors);
-  //thrust::copy(planesVectors_gpu_v.begin(), planesVectors_gpu_v.end(), planesVectors.begin());
+/*
+  cudaMemcpy( (supervoxel*)&voxels, voxels_gpu , size_t(v_size)*sizeof(supervoxel), cudaMemcpyDeviceToHost);
+  cudaFree(voxels_gpu);
+
+  cudaMemcpy( (double*)&normal_vector_x, normal_vector_x_gpu , size_t(nvx_size)*sizeof(double), cudaMemcpyDeviceToHost);
+  cudaFree(normal_vector_x_gpu);
+  cudaMemcpy( (double*)&normal_vector_y, normal_vector_y_gpu , size_t(nvy_size)*sizeof(double), cudaMemcpyDeviceToHost);
+  cudaFree(normal_vector_y_gpu);
+  cudaMemcpy( (double*)&normal_vector_z, normal_vector_z_gpu , size_t(nvz_size)*sizeof(double), cudaMemcpyDeviceToHost);
+  cudaFree(normal_vector_z_gpu);
+  cudaMemcpy( (double*)&pos_x, pos_x_gpu , size_t(px_size)*sizeof(double), cudaMemcpyDeviceToHost);
+  cudaFree(pos_x_gpu);
+  cudaMemcpy( (double*)&pos_y, pos_y_gpu , size_t(py_size)*sizeof(double), cudaMemcpyDeviceToHost);
+  cudaFree(pos_y_gpu);
+  cudaMemcpy( (double*)&pos_z, pos_z_gpu , size_t(pz_size)*sizeof(double), cudaMemcpyDeviceToHost);
+  cudaFree(pos_z_gpu);
+*/
   return;
 }

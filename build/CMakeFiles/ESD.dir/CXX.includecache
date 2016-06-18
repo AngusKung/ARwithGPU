@@ -85,12 +85,6 @@ vector
 -
 
 /home/b01901011/ARwithGPU/planeObject.h
-planeVoxel.h
-/home/b01901011/ARwithGPU/planeVoxel.h
-
-/home/b01901011/ARwithGPU/planeVoxel.h
-stdint.h
--
 
 /home/b01901011/ARwithGPU/supervoxel.h
 stdint.h
