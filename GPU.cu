@@ -7,6 +7,9 @@
 #include "SyncedMemory.h"
 //cuda
 #include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+//#include <thrust/generate.h>
+//#include <thrust/sort.h>
 //#include <thrust/copy.h>
 #define EXE_PER_THREAD 100
 #define parrallel_threshold 0.8
@@ -232,6 +235,7 @@ void copyPlaneToHost(planeObject* planesVectors_cpu, const int& pv_size, std::ve
         if(planesVectors_cpu[i].size == 0) continue;
         planesVectors.push_back(planesVectors_cpu[i]);
     }
+    return;
 }
 /*
 __global__ void test_t(t) {
@@ -303,4 +307,5 @@ void gpu(const std::vector<supervoxel>& voxels,
  // cudaMemcpy(planesVectors_cpu, planesVectors_gpu, numOfThreads, cudaMemcpyDeviceToHost);
   copyPlaneToHost(planesVectors_cpu, pv_size, planesVectors);
   //thrust::copy(planesVectors_gpu_v.begin(), planesVectors_gpu_v.end(), planesVectors.begin());
+  return;
 }

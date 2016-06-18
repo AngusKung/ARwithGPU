@@ -139,7 +139,8 @@ double mu=0.2;
 std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
 std::map<uint32_t, int> clusters_int;
 std::map<uint32_t, bool> clusters_used;
-std::vector<planeObject> planesVectors;
+std::vector<planeObject> planesObjectVectors;
+std::vector< std::vector<uint32_t> > planesVectors;
 std::vector<size_t> orderVectors;// Remember index of planesVectors to descending order
 //std::vector<double> aver_nor_x,aver_nor_y,aver_nor_z; 
 //std::vector<double> aver_pos_x,aver_pos_y,aver_pos_z; 
@@ -184,13 +185,13 @@ int
 main (int argc,
       char ** argv)
 {
-  if (argc <= 5) {
+  if (argc < 2) {
     PCL_INFO("Usage: ./ESD [supervoxel_scale] [input_point_cloud] (-sr) (-apc [aug_point_cloud])\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd \n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -sr\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -sr -apc my_pic.ply\n");
-    PCL_INFO("  Ex:  ./ESD 0.00568 test20.pcd -apc my_pic.ply -sr\n");
+    PCL_INFO("  Ex:  ./ESD 0.002 test60.pcd \n");
+    PCL_INFO("  Ex:  ./ESD 0.002 test60.pcd -sr\n");
+    PCL_INFO("  Ex:  ./ESD 0.002 test60.pcd -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.002 test60.pcd -sr -apc my_pic.ply\n");
+    PCL_INFO("  Ex:  ./ESD 0.002 test60.pcd -apc my_pic.ply -sr\n");
     PCL_INFO("Notice:\n");
     PCL_INFO("  [input_point_cloud] and [aug_point_cloud] supports .ply and .pcd\n");
     PCL_INFO("  -sr: show result\n");
@@ -339,31 +340,40 @@ main (int argc,
       size_t range_size = 0;
       for(adjacency_itr = range.first; adjacency_itr != range.second; adjacency_itr++)
         range_size++;
-      std::vector<supervoxel*> sv_vector_ptr;
+      std::vector<supervoxel*> sv_vector;
       for(adjacency_itr = range.first; adjacency_itr != range.second; adjacency_itr++){
         uint32_t neighbor_cluster = adjacency_itr->second;
         for(std::vector<supervoxel>::iterator sv_itr = supervoxels.begin(); sv_itr != supervoxels.end();sv_itr++){
-          if(sv_itr->cluster_num != neighbor_cluster)
+          if(sv_itr->cluster_num != neighbor_cluster){
+            sv_vector.push_back(&(*sv_itr));
             break;
-          //sv_vector_ptr.push_back(&sv_itr);
+          }
         }
-      if(sv_vector_ptr.size()!= range_size)
-        std::cerr<<"Unexpected size mismatch when generating vector<supervoxel*> *"<<endl;
-      //supervoxels[idx].setNeighbors(sv_vector_ptr);
       }
+      if(sv_vector.size()!= range_size)
+        std::cerr<<"vector size:"<<sv_vector.size()<<" ,while range_size:"<<range_size<<endl;
+      //std::vector<supervoxel*> *sv_vector_ptr = &sv_vector;
+      supervoxels[idx].setNeighbors(&sv_vector);
   }
   //time usage
   std::clock_t start;
   double duration;
   start = std::clock();
   //cuda
+  std::cerr<<"Calling GPU functions"<<endl;
   gpu(supervoxels, normal_vector_x, normal_vector_y, normal_vector_z,
-      pos_x, pos_y, pos_z, planesVectors);
+      pos_x, pos_y, pos_z, planesObjectVectors);
 
   //time usage due
   duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
   std::cerr<<"time usage: "<< duration <<'\n';
 
+  // Fix planesVectors
+  for(size_t idx = 0;idx<supervoxels.size(); idx++){
+    std::cerr<<supervoxels[idx].plane_id<<endl;
+  }
+  //comment
+  /*
   pcl::PointXYZRGBA the_point;
   pcl::PointCloud<pcl::PointXYZRGBA> the_points;
   pcl::PointCloud<PointT>::Ptr planes_grown(new pcl::PointCloud<PointT>);
@@ -421,9 +431,9 @@ main (int argc,
   }
   std::cerr<<"on total "<<mpss_labeled_cloud->points.size()<<endl;
 
-  /*for(order_it = orderVectors.begin();order_it!=orderVectors.end(); order_it++){
-    std::cout<<order_it-orderVectors.begin()<<":"<<planesVectors[*order_it].size()<<endl;
-  }*/
+  //for(order_it = orderVectors.begin();order_it!=orderVectors.end(); order_it++){
+  //  std::cout<<order_it-orderVectors.begin()<<":"<<planesVectors[*order_it].size()<<endl;
+  //}
   pcl::PointCloud<pcl::PointXYZL>::iterator voxel_itr = mpss_labeled_cloud->begin ();
   int no = 0;
   for (; voxel_itr != mpss_labeled_cloud->end (); voxel_itr++){
@@ -537,7 +547,7 @@ main (int argc,
     float target_pos_x = pos_x[nearest_cluster_int];
     float target_pos_y = pos_y[nearest_cluster_int];
     float target_pos_z = pos_z[nearest_cluster_int];*/
-    size_t AR_planar = max_planar;
+    /*size_t AR_planar = max_planar;
     double target_pos_x = planesVectors[AR_planar].aver_pos_x;
     double target_pos_y = planesVectors[AR_planar].aver_pos_y;
     double target_pos_z = planesVectors[AR_planar].aver_pos_z;
@@ -846,7 +856,7 @@ main (int argc,
       viewer->addPointCloud (augment_cloud3, "augment_cloud3");
     }*/
     /// Visualization Loop
-    PCL_INFO ("Loading viewer\n");
+    /*PCL_INFO ("Loading viewer\n");
     while (!viewer->wasStopped ()){
       viewer->spinOnce (100);
       /// Show Segmentation or Supervoxels
@@ -902,7 +912,7 @@ main (int argc,
 
     }
   }
-
+*/
   return (0);
 
 }  /// END main
