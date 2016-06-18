@@ -87,8 +87,8 @@
 //self-defined class
 #include "planeObject.h"
 #include "supervoxel.h"
-#include "planeVoxel.h"
-#include "planesVector.h"
+//#include "planeVoxel.h"
+//#include "planesVector.h"
 #include "GPU.h"
 
 #define CURVATURE UINT32_MAX
@@ -392,7 +392,7 @@ main (int argc,
       //label2var.insert(std::pair<uint32_t,float>(planeNo,plane_it->aver_var));
       //std::cout<<"label2norm: No."<<planeNo<<"  "<<diff<<","<<aver_nor_x[diff]<<","<<aver_nor_y[diff]<<","<<aver_nor_z[diff]<<endl;
       
-      for(superVoxel* voxel_it = plane_it.begin; voxel_it != NULL; voxel_it = voxel_it->next) {
+      for(supervoxel* voxel_it = plane_it.begin; voxel_it != NULL; voxel_it = voxel_it->next) {
         sv_label_to_seg_label_map[voxel_it->num]=planeNo;
       }
 //      for(std::vector<uint32_t>::iterator it = plane_it->plane.begin(); it!= plane_it->plane.end(); it++)

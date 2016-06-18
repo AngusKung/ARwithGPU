@@ -1,9 +1,12 @@
+#include <stdint.h>
 #pragma once
 
 class supervoxel {
 public:
     supervoxel( uint32_t num = 0, int i = 0, bool u = 0) :
-        cluster_int(i), cluster_num(num), used(u) { }
+        cluster_int(i), cluster_num(num), used(u) {
+        plane_id = -1;
+    }
 
 
     void setNeighbors(std::vector<supervoxel*> *sv_ptr){
@@ -16,6 +19,7 @@ public:
         }
     }
 
+    int      plane_id;
     uint32_t cluster_num;
     int      cluster_int;
     bool     used;
