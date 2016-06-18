@@ -50,9 +50,9 @@ include CMakeFiles/ESD.dir/progress.make
 include CMakeFiles/ESD.dir/flags.make
 
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: ../GPU.cu
+CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: ../SyncedMemory.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: ../planeObject.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: ../planeVoxel.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: ../planesVector.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: ../supervoxel.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/_G_config.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/alloca.h
@@ -102,13 +102,10 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_functio
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_iterator.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_iterator_base_funcs.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_iterator_base_types.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_map.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_multimap.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_pair.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_raw_storage_iter.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_relops.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_tempbuf.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_tree.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_uninitialized.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stl_vector.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/bits/stream_iterator.h
@@ -147,7 +144,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/iostream
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/istream
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/iterator
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/limits
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/map
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/memory
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/new
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/include/c++/4.8/ostream
@@ -282,7 +278,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/texture_indir
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/texture_indirect_functions.hpp
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/texture_types.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/advance.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/copy.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/advance.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/allocator/allocator_traits.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/allocator/allocator_traits.inl
@@ -315,8 +310,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/contiguous_storage.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/copy.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/copy.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/copy_if.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/copy_if.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/cstdint.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/device_free.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/detail/device_malloc.inl
@@ -464,7 +457,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/scatte
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/swap.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/assign_value.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/copy.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/copy_if.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/execution_policy.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/find.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/for_each.h
@@ -479,8 +471,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/swap_ranges.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cpp/detail/transform.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/assign_value.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/block/inclusive_scan.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/block/reduce.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/bulk.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/bulk/algorithm.hpp
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/bulk/algorithm/accumulate.hpp
@@ -532,21 +522,10 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/copy_cross_system.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/copy_device_to_device.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/copy_device_to_device.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/copy_if.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/copy_if.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/cuda_launch_config.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/decomposition.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/default_decomposition.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/default_decomposition.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/detail/alignment.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/detail/launch_calculator.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/detail/launch_calculator.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/detail/launch_closure.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/detail/launch_closure.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/error.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/execute_on_stream.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/execution_policy.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/extern_shared_ptr.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/fill.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/for_each.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/for_each.inl
@@ -559,17 +538,11 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/reduce.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/reduce_by_key.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/reduce_by_key.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/reduce_intervals.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/reduce_intervals.hpp
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/reduce_intervals.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/replace.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/runtime_introspection.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/runtime_introspection.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/scan.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/scan.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/swap_ranges.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/synchronize.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/synchronize.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/terminate.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/throw_on_error.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/detail/transform.h
@@ -578,7 +551,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/cuda/error.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/adl/assign_value.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/adl/copy.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/adl/copy_if.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/adl/equal.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/adl/fill.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/adl/find.h
@@ -607,8 +579,6 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/advance.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/copy.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/copy.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/copy_if.h
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/copy_if.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/distance.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/distance.inl
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/equal.h
@@ -646,11 +616,9 @@ CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/type_traits.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/uninitialized_fill.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/generic/uninitialized_fill.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/internal/decompose.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/assign_value.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/copy.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/copy.inl
-CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/copy_if.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/equal.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/execution_policy.h
 CMakeFiles/ESD.dir/ESD_generated_GPU.cu.o: /usr/local/cuda/include/thrust/system/detail/sequential/fill.h
